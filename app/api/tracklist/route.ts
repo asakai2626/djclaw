@@ -1,6 +1,6 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextResponse } from 'next/server';
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
+export async function GET() {
   const tracks = [
     { title: "Die With A Smile", artist: "Lady Gaga, Bruno Mars", bpm: 120, energy: 0.7 },
     { title: "Espresso", artist: "Sabrina Carpenter", bpm: 128, energy: 0.8 },
@@ -19,7 +19,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
     { title: "Vampire", artist: "Olivia Rodrigo", bpm: 135, energy: 0.5 },
   ];
 
-  res.status(200).json({
+  return NextResponse.json({
     station: "DJ Claw Radio",
     status: "online",
     mode: "infinite_stream",
