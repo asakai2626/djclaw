@@ -113,11 +113,25 @@ export default function Home() {
 
       <audio
         ref={audioRef}
-        src="/stream.mp3"
+        src={process.env.NEXT_PUBLIC_STREAM_URL || "/api/stream"}
         loop
         onPlaying={() => setStatus('Now Streaming')}
         onWaiting={() => setStatus('Buffering...')}
-        onError={() => setStatus('Connection Error')}
+        onError={() => {
+          setStatus('No Stream - Run ./full_start.sh');
+          // Try to fetch stream info
+          fetch('/api/stream')
+            .then(r => r.json())
+            .then(data => {
+              console.log('Stream info:', data);
+              if (data.streamUrl) {
+                if (audioRef.current) {
+                  audioRef.current.src = data.streamUrl;
+                  audioRef.current.play();
+                }
+              }
+            });
+        }}
       />
     </main>
   );
