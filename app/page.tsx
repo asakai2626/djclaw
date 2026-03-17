@@ -19,14 +19,46 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTrack, setCurrentTrack] = useState(0);
   const [volume, setVolume] = useState(80);
-  const [status, setStatus] = useState('Ready');
+  const [status, setStatus] = useState('Connecting...');
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [tracklist, setTracklist] = useState<any>(null);
 
   useEffect(() => {
     if (audioRef.current) {
       audioRef.current.volume = volume / 100;
     }
   }, [volume]);
+
+  // Auto-start on mount
+  useEffect(() => {
+    // Fetch tracklist
+    fetch('/api/tracklist')
+      .then(r => r.json())
+      .then(data => {
+        setTracklist(data);
+        setStatus('Ready');
+      })
+      .catch(err => {
+        console.error('Failed to fetch tracklist:', err);
+      });
+
+    // Auto-play
+    const timer = setTimeout(() => {
+      if (audioRef.current) {
+        audioRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+            setStatus('🎵 Now Streaming');
+          })
+          .catch(err => {
+            console.error('Auto-play failed:', err);
+            setStatus('Click to start');
+          });
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
@@ -52,7 +84,7 @@ export default function Home() {
     <main className="player">
       <div className="logo">
         <h1>🎧 DJ Claw Radio</h1>
-        <p>AI-Powered 24/7 Music Stream</p>
+        <p>24/7 AI-Curated Music Stream</p>
       </div>
 
       <div className="visualizer">
@@ -76,35 +108,20 @@ export default function Home() {
             value={volume}
             onChange={(e) => setVolume(Number(e.target.value))}
           />
-        </div>
-
-        <button className="play-btn" onClick={togglePlay}>
-          {isPlaying ? '⏸️' : '▶️'}
-        </button>
-
-        <div className="volume-container">
-          <button
-            style={{
-              background: 'rgba(255,255,255,0.2)',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: '5px',
-              color: 'white',
-              cursor: 'pointer',
-            }}
-            onClick={skipTrack}
-          >
-            次へ
-          </button>
+          <span>{volume}%</span>
         </div>
       </div>
 
       <div className="track-info">
-        <h2>{tracks[currentTrack].title}</h2>
-        <p>{tracks[currentTrack].artist}</p>
-        <p style={{ fontSize: '12px', marginTop: '5px', opacity: 0.6 }}>
-          {tracks[currentTrack].bpm} BPM | Energy: {tracks[currentTrack].energy}
-        </p>
+        <h2>{status}</h2>
+        {tracklist && (
+          <>
+            <p>{tracklist.currentPlaylist || 'AI-Curated Billboard Hot 100'}</p>
+            <p style={{ fontSize: '12px', marginTop: '5px', opacity: 0.6 }}>
+              {tracklist.track_count || 0} tracks
+            </p>
+          </>
+        )}
       </div>
 
       <div className={`status ${isPlaying ? 'online' : ''}`}>
@@ -113,25 +130,19 @@ export default function Home() {
 
       <audio
         ref={audioRef}
-        src={process.env.NEXT_PUBLIC_STREAM_URL || "/api/stream"}
+        src={process.env.NEXT_PUBLIC_STREAM_URL || "https://garlic-evening-effect-shirt.trycloudflare.com/stream"}
+        autoPlay
         loop
-        onPlaying={() => setStatus('Now Streaming')}
-        onWaiting={() => setStatus('Buffering...')}
-        onError={() => {
-          setStatus('No Stream - Run ./full_start.sh');
-          // Try to fetch stream info
-          fetch('/api/stream')
-            .then(r => r.json())
-            .then(data => {
-              console.log('Stream info:', data);
-              if (data.streamUrl) {
-                if (audioRef.current) {
-                  audioRef.current.src = data.streamUrl;
-                  audioRef.current.play();
-                }
-              }
-            });
+        onPlaying={() => {
+          setStatus('🎵 Now Streaming');
+          setIsPlaying(true);
         }}
+        onWaiting={() => setStatus('Buffering...')}
+        onError={(e) => {
+          console.error('Stream error:', e);
+          setStatus('❌ Stream offline - Check server');
+        }}
+        onCanPlay={() => setStatus('Ready')}
       />
     </main>
   );

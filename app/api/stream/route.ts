@@ -1,20 +1,14 @@
-// Next.js API route for streaming audio
 import { NextResponse } from 'next/server';
 
 export async function GET() {
-  // In production, this should proxy to your Icecast/streaming server
-  // For demo, we'll return info about how to set up streaming
-
+  // Return stream info - actual audio comes from Cloudflare Tunnel
   return NextResponse.json({
-    status: "ready",
-    message: "Stream endpoint configured",
-    streamUrl: process.env.NEXT_PUBLIC_STREAM_URL || null,
-    instructions: {
-      local: "Run ./full_start.sh to start local streaming",
-      production: "Set NEXT_PUBLIC_STREAM_URL env var to your stream URL"
-    },
+    status: "online",
+    streamUrl: process.env.STREAM_URL || null,
     currentPlaylist: "AI-Curated Billboard Hot 100",
-    trackCount: 15,
-    updated: new Date().toISOString()
+    trackCount: 10,
+    loopMode: "infinite",
+    updated: new Date().toISOString(),
+    instructions: "Set STREAM_URL env var to your Cloudflare Tunnel URL"
   });
 }
