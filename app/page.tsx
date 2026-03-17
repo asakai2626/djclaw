@@ -130,7 +130,7 @@ export default function Home() {
 
       <audio
         ref={audioRef}
-        src={process.env.NEXT_PUBLIC_STREAM_URL || "https://garlic-evening-effect-shirt.trycloudflare.com/stream"}
+        src="https://djclaw.loca.lt/stream"
         autoPlay
         loop
         onPlaying={() => {
@@ -140,9 +140,8 @@ export default function Home() {
         onWaiting={() => setStatus('Buffering...')}
         onError={(e) => {
           console.error('Stream error:', e);
-          setStatus('❌ Stream offline - Check server');
+          setStatus('❌ Stream offline');
         }}
-        onCanPlay={() => setStatus('Ready')}
       />
     </main>
   );
